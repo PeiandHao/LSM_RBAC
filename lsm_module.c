@@ -21,7 +21,7 @@
 #define SYSCALL_RENAME 2
 #define SYSCALL_RMDIR 4
 
-char role_list[3][10] = {"MKDIR\0", "RENAME\0", "RMDIR"\0};
+char role_list[3][10] = {"MKDIR\0", "RENAME\0", "RMDIR\0"};
 
 static int lsm_init(void){
     printk(KERN_WARNING "[LSM_INIT]\n");

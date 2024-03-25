@@ -1,0 +1,1 @@
+cmd_/home/peiwithhao/repo/LSM_RBAC/Module.symvers :=  scripts/mod/modpost -m -a     -o /home/peiwithhao/repo/LSM_RBAC/Module.symvers -T /home/peiwithhao/repo/LSM_RBAC/modules.order -i Module.symvers -e 
