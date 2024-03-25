@@ -1,0 +1,7 @@
+role_mouse:RMDIR,RENAME,MKDIR;
+role_cow:RENAME,RMDIR;
+role_tiger:RMDIR,MKDIR;
+role_rabbit:RENAME,MKDIR;
+role_dragon:MKDIR;
+role_snake:RENAME;
+role_horse:RMDIR;
