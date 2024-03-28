@@ -21,10 +21,14 @@
 #define RBAC_ROLE_CONFIG "/etc/config/role_config"
 #define RBAC_GATE_CONFIG "/etc/config/gate_config"
 
-#define LSM_GATE "T"
+#define LSM_GATE_OPEN "T"
+#define LSM_GATE_CLOSE "F"
 #define SYSCALL_MKDIR 1
 #define SYSCALL_RENAME 2
 #define SYSCALL_RMDIR 4
+
+#define PASS 0
+#define NOPASS EINVAL
 
 char role_list[3][10] = {"MKDIR\0", "RENAME\0", "RMDIR\0"};
 
@@ -96,16 +100,44 @@ int get_user_config(void){
     }
 
     /* failed for finding the user */
-    if(flag == 0) return 0;
     filp_close(f, 0);
-
+    if(flag == 0) return 0;
+    
     /* Get the capability by token */
     token = buf;
     i = 0;
-    f= filep_open(RBAC_ROLE_CONFIG, O_RDONLY, 0);
-
-
-
+    f= filep_open(RBAC_ROLE_CONFIG, O_RDONLY, 0);   
+    if(IS_ERR(f)){
+        goto GET_CONFIG_ERR; 
+    }
+    flag= 0;
+    while(vfs_read(f, buf+i, 1, &f->f_pos) == 1){
+        if(buf[i] == ':'){
+            buf[i] = '\0';
+            if(!strcmp(token, cur_role)){
+                flag = 1;
+            }
+            token = buf+i+1;
+        }else if(buf[i] == ',' || buf[i] == ';'){
+            buf[i] = '\0';
+            if(flag){
+                if(!strcmp("RMDIR", token)) user_cap |= RMDIR;
+                else if(!strcmp("RENAME", token)) user_cap |= RENAME;
+                else if(!strcmp("MKDIR", token)) user_cap |= MKDIR;
+                else printk(KERN_WARNING "invalid capability");
+            }
+            token = buf+i+1;
+        }else if(buf[i] == '\n'){
+            if(flag){
+                break;
+            }
+            token = buf+i+1;
+        }
+        i++;
+    }
+    if(!flag) return 0;
+    filp_close(f, 0);
+    return user_cap;
 
 GET_CONFIG_ERR:
     filp_close(f, 0);
@@ -131,21 +163,80 @@ int lsm_enabled(){
         goto ERROR_FILE;
     }
 
-    filp_close(f);
+    filp_close(f, 0);
     return !strcmp(buf,LSM_GATE);        
 
 ERROR_FILE:
-    filp_close(f);
+    filp_close(f, 0);
     return 0;
 }
 
+int check_rename_auth(int cur_role){
+    if(cur_role && RENAME){  
+        return 1;
+    }else
+        return 0;
+}
+int rename_hook(struct inode *dir, stct dentry *dentry){
+    int gate = lsm_enabled();
+    int cur_cap;
+    int flag;
+    if(!gate){
+        return 0;
+    }
+    printk("[Hook rename successfully!]");
+    cur_cap = get_user_config();
+    flag = check_rename_auth(cur_cap);
+    if(flag){
+        return PASS;
+    }else{
+        return NOPASS;
+    }
+}
+int check_rmdir_auth(int cur_role){
+    if(cur_role && RMDIR){  
+        return 1;
+    }else
+        return 0;
+}
+int rmdir_hook(struct inode *dir, stct dentry *dentry){
+    int gate = lsm_enabled();
+    int cur_cap;
+    int flag;
+    if(!gate){
+        return 0;
+    }
+    printk("[Hook rmdir successfully!]");
+    cur_cap = get_user_config();
+    flag = check_rmdir_auth(cur_cap);
+    if(flag){
+        return PASS;
+    }else{
+        return NOPASS;
+    }
+}
+
+int check_mkdir_auth(int cur_role){
+    if(cur_role && MKDIR){  
+        return 1;
+    }else
+        return 0;
+}
 int mkdir_hook(struct inode *dir, stct dentry *dentry){
     int gate = lsm_enabled();
+    int cur_cap;
+    int flag;
     if(!gate){
         return 0;
     }
     printk("[Hook mkdir successfully!]");
-    
+    cur_cap = get_user_config();
+    flag = check_mkdir_auth(cur_cap);
+    if(flag){
+        return PASS;
+    }else{
+        return NOPASS;
+    }
 }
 
 /*
