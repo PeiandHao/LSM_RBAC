@@ -1,4 +1,4 @@
-cmd_/home/peiwithhao/repo/LSM_RBAC/lsm_module.o := gcc-12 -Wp,-MMD,/home/peiwithhao/repo/LSM_RBAC/.lsm_module.o.d -nostdinc -I./arch/x86/include -I./arch/x86/include/generated  -I./include -I./arch/x86/include/uapi -I./arch/x86/include/generated/uapi -I./include/uapi -I./include/generated/uapi -include ./include/linux/compiler-version.h -include ./include/linux/kconfig.h -I./ubuntu/include -include ./include/linux/compiler_types.h -D__KERNEL__ -fmacro-prefix-map=./= -Wall -Wundef -Werror=strict-prototypes -Wno-trigraphs -fno-strict-aliasing -fno-common -fshort-wchar -fno-PIE -Werror=implicit-function-declaration -Werror=implicit-int -Werror=return-type -Wno-format-security -funsigned-char -std=gnu11 -mno-sse -mno-mmx -mno-sse2 -mno-3dnow -mno-avx -fcf-protection=none -m64 -falign-jumps=1 -falign-loops=1 -mno-80387 -mno-fp-ret-in-387 -mpreferred-stack-boundary=3 -mskip-rax-setup -mtune=generic -mno-red-zone -mcmodel=kernel -Wno-sign-compare -fno-asynchronous-unwind-tables -mindirect-branch=thunk-extern -mindirect-branch-register -mindirect-branch-cs-prefix -mfunction-return=thunk-extern -fno-jump-tables -mharden-sls=all -fpatchable-function-entry=16,16 -fno-delete-null-pointer-checks -Wno-frame-address -Wno-format-truncation -Wno-format-overflow -Wno-address-of-packed-member -O2 -fno-allow-store-data-races -Wframe-larger-than=1024 -fstack-protector-strong -Wno-main -Wno-unused-but-set-variable -Wno-unused-const-variable -Wno-dangling-pointer -fno-omit-frame-pointer -fno-optimize-sibling-calls -ftrivial-auto-var-init=zero -fno-stack-clash-protection -fzero-call-used-regs=used-gpr -pg -mrecord-mcount -mfentry -DCC_USING_FENTRY -falign-functions=16 -Wdeclaration-after-statement -Wvla -Wno-pointer-sign -Wcast-function-type -Wno-stringop-truncation -Wno-stringop-overflow -Wno-restrict -Wno-maybe-uninitialized -Wno-array-bounds -Wno-alloc-size-larger-than -Wimplicit-fallthrough=5 -fno-strict-overflow -fno-stack-check -fconserve-stack -Werror=date-time -Werror=incompatible-pointer-types -Werror=designated-init -Wno-packed-not-aligned -g -gdwarf-5  -fsanitize=bounds -fsanitize=shift -fsanitize=bool -fsanitize=enum  -DMODULE  -DKBUILD_BASENAME='"lsm_module"' -DKBUILD_MODNAME='"lsm_module"' -D__KBUILD_MODNAME=kmod_lsm_module -c -o /home/peiwithhao/repo/LSM_RBAC/lsm_module.o /home/peiwithhao/repo/LSM_RBAC/lsm_module.c   ; ./tools/objtool/objtool --hacks=jump_label --hacks=noinstr --hacks=skylake --retpoline --rethunk --sls --stackval --static-call --uaccess --prefix=16   --module /home/peiwithhao/repo/LSM_RBAC/lsm_module.o
+cmd_/home/peiwithhao/repo/LSM_RBAC/lsm_module.o := gcc -Wp,-MMD,/home/peiwithhao/repo/LSM_RBAC/.lsm_module.o.d -nostdinc -I./arch/x86/include -I./arch/x86/include/generated  -I./include -I./arch/x86/include/uapi -I./arch/x86/include/generated/uapi -I./include/uapi -I./include/generated/uapi -include ./include/linux/compiler-version.h -include ./include/linux/kconfig.h -include ./include/linux/compiler_types.h -D__KERNEL__ -fmacro-prefix-map=./= -Wall -Wundef -Werror=strict-prototypes -Wno-trigraphs -fno-strict-aliasing -fno-common -fshort-wchar -fno-PIE -Werror=implicit-function-declaration -Werror=implicit-int -Werror=return-type -Wno-format-security -funsigned-char -std=gnu11 -mno-sse -mno-mmx -mno-sse2 -mno-3dnow -mno-avx -fcf-protection=none -m64 -falign-jumps=1 -falign-loops=1 -mno-80387 -mno-fp-ret-in-387 -mpreferred-stack-boundary=3 -mskip-rax-setup -mtune=generic -mno-red-zone -mcmodel=kernel -Wno-sign-compare -fno-asynchronous-unwind-tables -mindirect-branch=thunk-extern -mindirect-branch-register -mindirect-branch-cs-prefix -mfunction-return=thunk-extern -fno-jump-tables -mharden-sls=all -fpatchable-function-entry=16,16 -fno-delete-null-pointer-checks -Wno-frame-address -Wno-format-truncation -Wno-format-overflow -Wno-address-of-packed-member -O2 -fno-allow-store-data-races -Wframe-larger-than=1024 -fstack-protector-strong -Wno-main -Wno-unused-but-set-variable -Wno-unused-const-variable -Wno-dangling-pointer -fno-omit-frame-pointer -fno-optimize-sibling-calls -ftrivial-auto-var-init=zero -fno-stack-clash-protection -fzero-call-used-regs=used-gpr -pg -mrecord-mcount -mfentry -DCC_USING_FENTRY -falign-functions=16 -Wdeclaration-after-statement -Wvla -Wno-pointer-sign -Wcast-function-type -Wno-stringop-truncation -Wno-stringop-overflow -Wno-restrict -Wno-maybe-uninitialized -Wno-array-bounds -Wno-alloc-size-larger-than -Wimplicit-fallthrough=5 -fno-strict-overflow -fno-stack-check -fconserve-stack -Werror=date-time -Werror=incompatible-pointer-types -Werror=designated-init -Wno-packed-not-aligned -g -gdwarf-5  -fsanitize=bounds -fsanitize=shift -fsanitize=bool -fsanitize=enum  -DMODULE  -DKBUILD_BASENAME='"lsm_module"' -DKBUILD_MODNAME='"lsm_module"' -D__KBUILD_MODNAME=kmod_lsm_module -c -o /home/peiwithhao/repo/LSM_RBAC/lsm_module.o /home/peiwithhao/repo/LSM_RBAC/lsm_module.c   ; ./tools/objtool/objtool --hacks=jump_label --hacks=noinstr --hacks=skylake --retpoline --rethunk --sls --stackval --static-call --uaccess --prefix=16   --module /home/peiwithhao/repo/LSM_RBAC/lsm_module.o
 
 source_/home/peiwithhao/repo/LSM_RBAC/lsm_module.o := /home/peiwithhao/repo/LSM_RBAC/lsm_module.c
 
@@ -12,8 +12,6 @@ deps_/home/peiwithhao/repo/LSM_RBAC/lsm_module.o := \
   include/linux/compiler_types.h \
     $(wildcard include/config/DEBUG_INFO_BTF) \
     $(wildcard include/config/PAHOLE_HAS_BTF_TAG) \
-    $(wildcard include/config/FUNCTION_ALIGNMENT) \
-    $(wildcard include/config/CC_IS_GCC) \
     $(wildcard include/config/HAVE_ARCH_COMPILER_H) \
     $(wildcard include/config/CC_HAS_ASM_INLINE) \
   include/linux/compiler_attributes.h \
@@ -23,19 +21,8 @@ deps_/home/peiwithhao/repo/LSM_RBAC/lsm_module.o := \
     $(wildcard include/config/SHADOW_CALL_STACK) \
     $(wildcard include/config/KCOV) \
   include/linux/security.h \
-    $(wildcard include/config/SECURITY_SELINUX) \
-    $(wildcard include/config/SECURITY_SMACK) \
-    $(wildcard include/config/SECURITY_TOMOYO) \
-    $(wildcard include/config/SECURITY_IMA) \
-    $(wildcard include/config/SECURITY_APPARMOR) \
-    $(wildcard include/config/SECURITY_YAMA) \
-    $(wildcard include/config/SECURITY_LOADPIN) \
-    $(wildcard include/config/SECURITY_SAFESETID) \
-    $(wildcard include/config/SECURITY_LOCKDOWN) \
-    $(wildcard include/config/BPF_LSM) \
-    $(wildcard include/config/SECURITY_LANDLOCK) \
-    $(wildcard include/config/SECURITY) \
     $(wildcard include/config/MMU) \
+    $(wildcard include/config/SECURITY) \
     $(wildcard include/config/WATCH_QUEUE) \
     $(wildcard include/config/KEY_NOTIFICATIONS) \
     $(wildcard include/config/SECURITY_NETWORK) \
@@ -44,7 +31,6 @@ deps_/home/peiwithhao/repo/LSM_RBAC/lsm_module.o := \
     $(wildcard include/config/SECURITY_PATH) \
     $(wildcard include/config/KEYS) \
     $(wildcard include/config/AUDIT) \
-    $(wildcard include/config/IMA_LSM_RULES) \
     $(wildcard include/config/SECURITYFS) \
     $(wildcard include/config/BPF_SYSCALL) \
     $(wildcard include/config/PERF_EVENTS) \
@@ -192,7 +178,6 @@ deps_/home/peiwithhao/repo/LSM_RBAC/lsm_module.o := \
     $(wildcard include/config/ARCH_HAS_MEM_ENCRYPT) \
     $(wildcard include/config/AMD_MEM_ENCRYPT) \
   arch/x86/include/asm/mem_encrypt.h \
-    $(wildcard include/config/X86_MEM_ENCRYPT) \
   include/linux/init.h \
     $(wildcard include/config/HAVE_ARCH_PREL32_RELOCATIONS) \
     $(wildcard include/config/STRICT_KERNEL_RWX) \
@@ -218,7 +203,6 @@ deps_/home/peiwithhao/repo/LSM_RBAC/lsm_module.o := \
   include/uapi/video/edid.h \
   arch/x86/include/asm/nospec-branch.h \
     $(wildcard include/config/CALL_THUNKS_DEBUG) \
-    $(wildcard include/config/CPU_SRSO) \
     $(wildcard include/config/CPU_IBPB_ENTRY) \
   include/linux/static_key.h \
   include/linux/jump_label.h \
@@ -229,6 +213,7 @@ deps_/home/peiwithhao/repo/LSM_RBAC/lsm_module.o := \
   include/linux/objtool.h \
     $(wildcard include/config/FRAME_POINTER) \
   include/linux/linkage.h \
+    $(wildcard include/config/FUNCTION_ALIGNMENT) \
     $(wildcard include/config/ARCH_USE_SYM_ANNOTATIONS) \
   include/linux/export.h \
     $(wildcard include/config/MODVERSIONS) \
@@ -956,7 +941,6 @@ deps_/home/peiwithhao/repo/LSM_RBAC/lsm_module.o := \
     $(wildcard include/config/INIT_ON_ALLOC_DEFAULT_ON) \
     $(wildcard include/config/INIT_ON_FREE_DEFAULT_ON) \
     $(wildcard include/config/DEBUG_PAGEALLOC) \
-    $(wildcard include/config/ARCH_WANT_HUGETLB_PAGE_OPTIMIZE_VMEMMAP) \
     $(wildcard include/config/HUGETLBFS) \
     $(wildcard include/config/MAPPING_DIRTY_HELPERS) \
   include/linux/mmap_lock.h \

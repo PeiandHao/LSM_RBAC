@@ -23,9 +23,9 @@
 
 #define LSM_GATE_OPEN "T"
 #define LSM_GATE_CLOSE "F"
-#define SYSCALL_MKDIR 1
-#define SYSCALL_RENAME 2
-#define SYSCALL_RMDIR 4
+#define MKDIR 1
+#define RENAME 2
+#define RMDIR 4
 
 #define PASS 0
 #define NOPASS EINVAL
@@ -106,7 +106,7 @@ int get_user_config(void){
     /* Get the capability by token */
     token = buf;
     i = 0;
-    f= filep_open(RBAC_ROLE_CONFIG, O_RDONLY, 0);   
+    f= filp_open(RBAC_ROLE_CONFIG, O_RDONLY, 0);   
     if(IS_ERR(f)){
         goto GET_CONFIG_ERR; 
     }
@@ -148,23 +148,22 @@ GET_CONFIG_ERR:
  * lsm_enabled():Judge the lsm_module if it has been opened by root
  * return: 1 for open, 0 for close
  * */
-int lsm_enabled(){
-    void buf[0x400] = {0};
+int lsm_enabled(void){
+    char buffer[0x50] = {0};
     int count = 0;
-    int f_pos = 0;
     struct file *f = filp_open(RBAC_GATE_CONFIG, O_RDONLY, 0);
     if(IS_ERR(f) || (f == NULL)){
         printk(KERN_WARNING "get gate config error. \n");
         goto ERROR_FILE;
     }
-    count = vfs_read(f, buf, sizeof(buf), &f->f_pos);
+    count = vfs_read(f, buffer, sizeof(buffer), &f->f_pos);
     if(count < 0){
         printk(KERN_WARNING "read failed...");
         goto ERROR_FILE;
     }
 
     filp_close(f, 0);
-    return !strcmp(buf,LSM_GATE);        
+    return !strcmp(buffer,LSM_GATE_OPEN);        
 
 ERROR_FILE:
     filp_close(f, 0);
@@ -177,7 +176,8 @@ int check_rename_auth(int cur_role){
     }else
         return 0;
 }
-int rename_hook(struct inode *dir, stct dentry *dentry){
+
+int rename_hook(struct inode *old_dir, struct dentry *old_dentry, struct inode *new_dir, struct dentry *new_dentry){
     int gate = lsm_enabled();
     int cur_cap;
     int flag;
@@ -199,7 +199,7 @@ int check_rmdir_auth(int cur_role){
     }else
         return 0;
 }
-int rmdir_hook(struct inode *dir, stct dentry *dentry){
+int rmdir_hook(struct inode *dir, struct dentry *dentry){
     int gate = lsm_enabled();
     int cur_cap;
     int flag;
@@ -222,7 +222,7 @@ int check_mkdir_auth(int cur_role){
     }else
         return 0;
 }
-int mkdir_hook(struct inode *dir, stct dentry *dentry){
+int mkdir_hook(struct inode *dir, struct dentry *dentry, umode_t mode){
     int gate = lsm_enabled();
     int cur_cap;
     int flag;
@@ -233,8 +233,10 @@ int mkdir_hook(struct inode *dir, stct dentry *dentry){
     cur_cap = get_user_config();
     flag = check_mkdir_auth(cur_cap);
     if(flag){
+        printk(KERN_INFO "[+]mkdir accessble");
         return PASS;
     }else{
+        printk(KERN_WARNING "[x]You have no permission");
         return NOPASS;
     }
 }
@@ -251,14 +253,14 @@ struct security_hook_list hooks[] = {
      * care of the common case and reduces the amount of 
      * text incolved
      * */
-    LSM_HOOK_INIT(inode_mkdir, mkdir_hook);
-    LSM_HOOK_INIT(inode_rmdir, rmdir_hook);
-    LSM_HOOK_INIT(inode_rename, rename_hook);
+    LSM_HOOK_INIT(inode_mkdir, mkdir_hook),
+    LSM_HOOK_INIT(inode_rmdir, rmdir_hook),
+    LSM_HOOK_INIT(inode_rename, rename_hook)
 };
 
 static int lsm_init(void){
     printk(KERN_WARNING "[LSM_INIT]\n");
-    security_add_hooks(hooks,ARRAY_SIZE(hooks));
+    security_add_hooks(hooks,ARRAY_SIZE(hooks), "lsm_module");
     return 0;
 }
 
@@ -266,7 +268,7 @@ static void lsm_exit(void){
     printk(KERN_WARNING "[LSM_EXIT]\n");
     int i, count=ARRAY_SIZE(hooks);
     for(int i = 0; i < count; i++){
-        list_del_rcu(&hooks[i].list);
+        hlist_del_rcu(&hooks[i].list);
     }
 }
 
