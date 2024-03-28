@@ -12,6 +12,9 @@
 #include <asm/uaccess.h>
 #include <linux/uidgid.h>
 #include <linux/cred.h>
+#include <linux/sched.h>
+#include <linux/mm.h>
+#include <linux/types.h>
 
 #define RBAC_CONFIG_PATH "/etc/config/"
 #define RBAC_USER_CONFIG "/etc/config/user_config"
@@ -25,28 +28,16 @@
 
 char role_list[3][10] = {"MKDIR\0", "RENAME\0", "RMDIR\0"};
 
-size_t mkdir_hook();
-size_t rmdir_hook();
-size_t rename_hook();
+int get_user_config(void);
 
-size_t lsm_enabled();
-
-size_t mkdir_auth();
-size_t rmdir_auth();
-size_t rename_hook();
-size_t read_line(struct file *f, char *buf, size_t size, size_t *f_pos);
-void split_string(char *vuln, char dilever);
-
-size_t get_user_config();
-
-size_t read_line(struct file *f, char *buf, size_t *f_pos){
-    size_t read_bytes = 0;
+int read_line(struct file *f, char *buf, int *f_pos){
+    int read_bytes = 0;
     char byte;
     while(1){
-        if(f->ops->read(f, &byte, 1, f_pos) <= 0){
+        if(vfs_read(f, &byte, 1, &f->f_pos) <= 0){
             break;
         }
-        if(!strcmp(byte, "\n")){
+        if(!strcmp(&byte, "\n")){
             break;
         }
         buf[read_bytes++] = byte;
@@ -55,24 +46,25 @@ size_t read_line(struct file *f, char *buf, size_t *f_pos){
 }
 
 int str2int(char *str){
-    int result;
-    if(kstrtol(str, 10, &result) != 0){
+    long tmp;
+    if(kstrtol(str, 10, &tmp) != 0){
         return -EINVAL;
     }
-    return result;
+    return (int)tmp;
 }
 
-size_t get_user_config(void){
+int get_user_config(void){
     
-    size_t user_cap = 0;
+    int user_cap = 0;
     char *token;
+    int i, flag = 0;
 
     printk(KERN_WARNING "[Get the current user]");
     struct user_struct *user = get_current_user();
     int cur_uid = user->uid.val;
     printk("[Current uid is %d\n]", cur_uid);
 
-    char buf[0x400], cur_role[0x100] = {0};
+    char buf[0x400], cur_role[0x30] = {0};
 
     /* Get user config and the  */
     struct file *f = filp_open(RBAC_USER_CONFIG, O_RDONLY, 0);
@@ -80,23 +72,43 @@ size_t get_user_config(void){
         printk(KERN_WARNING "get user config error. \n");
         goto GET_CONFIG_ERR;
     }
-    if(!f->ops || !f->ops->read){
-        printk(KERN_WARNING "read failed...\n");
-        goto GET_CONFIG_ERR;
-    }
-    while(read_line(f, buf, 0)){
-        if(!(token=strsep(&buf, ':'))){
-            goto GET_CONFIG_ERR;
+    /* u16 oldfs; */
+    /* /1* 獲取當前地址空間類型 *1/ */
+    /* oldfs = get_fs(); */
+    /* set_fs(KERNEL_DS); */
+    token = buf;
+    i = 0;
+    while(vfs_read(f, buf+i, 1, &f->f_pos) == 1){
+        if(buf[i] == ':'){
+            buf[i] = '\0';
+            if(str2int(token) == cur_uid){
+                flag = 1;
+                token = buf+i+1;
+            }
+        }else if(buf[i] == ';'){
+            if(flag){
+                buf[i-1] = '\0'; 
+                printk("cur_role: %s\n", token);
+                strcpy(cur_role, token);
+            }
         }
-        if(str2int(token) == cur_uid){
-            token = strsep(&buf, ':');
-            break;
-        }
+        i++;
     }
+
+    /* failed for finding the user */
+    if(flag == 0) return 0;
+    filp_close(f, 0);
+
     /* Get the capability by token */
+    token = buf;
+    i = 0;
+    f= filep_open(RBAC_ROLE_CONFIG, O_RDONLY, 0);
+
+
+
 
 GET_CONFIG_ERR:
-    filp_close(f);
+    filp_close(f, 0);
     return 0;
 }
 
@@ -104,21 +116,16 @@ GET_CONFIG_ERR:
  * lsm_enabled():Judge the lsm_module if it has been opened by root
  * return: 1 for open, 0 for close
  * */
-size_t lsm_enabled(){
+int lsm_enabled(){
     void buf[0x400] = {0};
-    size_t count = 0;
-    size_t f_pos = 0;
+    int count = 0;
+    int f_pos = 0;
     struct file *f = filp_open(RBAC_GATE_CONFIG, O_RDONLY, 0);
     if(IS_ERR(f) || (f == NULL)){
         printk(KERN_WARNING "get gate config error. \n");
         goto ERROR_FILE;
     }
-    if( !f->ops || f->ops->read){
-        printk(KERN_WARNING "the file ops has wrong config!:(");
-        goto ERROR_FILE;
-    } 
-
-    count = f->ops->read(f, buf, sizeof(buf), &f_pos);
+    count = vfs_read(f, buf, sizeof(buf), &f->f_pos);
     if(count < 0){
         printk(KERN_WARNING "read failed...");
         goto ERROR_FILE;
@@ -132,8 +139,8 @@ ERROR_FILE:
     return 0;
 }
 
-size_t mkdir_hook(struct inode *dir, stct dentry *dentry){
-    size_t gate = lsm_enabled();
+int mkdir_hook(struct inode *dir, stct dentry *dentry){
+    int gate = lsm_enabled();
     if(!gate){
         return 0;
     }
