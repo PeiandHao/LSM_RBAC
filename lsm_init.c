@@ -33,7 +33,7 @@ struct rbac_role {
 
 struct rbac_role * get_role(){
     int fd = open(ROLECONFIG, O_RDONLY);
-    struct rbac_role *role_arr = (struct rbac_role *)zalloc(sizeof(struct rbac_role)*0x10);
+    struct rbac_role *role_arr = (struct rbac_role *)malloc(sizeof(struct rbac_role)*0x10);
     if(fd < 0){
         printf("[x]Open role_config failed\n");
         return 0;
@@ -65,7 +65,23 @@ struct rbac_role * get_role(){
     return role_arr;
 }
 
-int modify_user(void){
+void show_role(){
+    int fd = open(ROLECONFIG, O_RDONLY);
+    if(fd < 0){
+        printf("[x]Open Failed\n");
+        return ;
+    }
+    char buf[0x50] = {0};
+    int read_bytes = read(fd, buf, sizeof(buf));
+    if(read_bytes < 0){
+        printf("[x]read failed\n");
+        return;
+    }
+    write(1, buf, sizeof(buf));
+    return;
+}
+
+int bind_role(void){
     int fd = open(USERCONFIG, O_RDWR);
     int m_uid = -1;
     char buf[0x50] = {0};
@@ -102,8 +118,23 @@ int modify_user(void){
         close(fd);
         return 0;
     }
-
-
+    /* 获取全局的role */
+    struct rbac_role * role_ptr = get_role();
+    show_role();
+    printf("[+]Choose your role for binding");
+    char choice[0x10] = {0};
+    scanf("%s", choice);
+    i = 0;
+    flag = 0;
+    while(rbac_role[i++].name){
+        if(!strcmp(rbac_role[i++].name, choice)){
+            flag = 1;
+            write(fd, choice, sizeof(choice));
+            write(fd, ";\n", 1);
+            break;
+        }
+    }
+    if(flag)
 }
 
 
