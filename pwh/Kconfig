@@ -1,0 +1,6 @@
+config SECURITY_PWH
+    bool "PWH"
+    depends on SECURITY
+   default n
+    help
+        peiwithhao's LSM based RBAC practice
