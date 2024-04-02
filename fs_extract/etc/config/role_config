@@ -1,0 +1,3 @@
+dragon_role:MKDIR,RMDIR,RENAME;
+snake_role:MKDIR,RMDIR;
+tiger_role:MKDIR;

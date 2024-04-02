@@ -126,15 +126,14 @@ int bind_role(void){
     scanf("%s", choice);
     i = 0;
     flag = 0;
-    while(rbac_role[i++].name){
-        if(!strcmp(rbac_role[i++].name, choice)){
+    while(role_ptr[i++].name){
+        if(!strcmp(role_ptr[i++].name, choice)){
             flag = 1;
             write(fd, choice, sizeof(choice));
             write(fd, ";\n", 1);
             break;
         }
     }
-    if(flag)
 }
 
 
@@ -167,7 +166,7 @@ int main()
                        }
                    }
             case 3:{
-                       modify_user();
+                       bind_role();
                    }
         }
         break;
