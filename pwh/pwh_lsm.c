@@ -264,7 +264,7 @@ static int __init pwh_init(void){
     return 0;
 }
 
-security_install(pwh_init)
+security_install(pwh_init);
 /* static void lsm_exit(void){ */
 /*     printk(KERN_WARNING "[LSM_EXIT]\n"); */
 /*     int i, count=ARRAY_SIZE(hooks); */

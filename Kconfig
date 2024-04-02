@@ -260,7 +260,7 @@ choice
 		bool "SELinux" if SECURITY_SELINUX=y
 
 	config DEFAULT_SECURITY_PWH
-		bool "pwh" if SECURITY_RBAC=y
+		bool "pwh" if SECURITY_PWH=y
 
 	config DEFAULT_SECURITY_SMACK
 		bool "Simplified Mandatory Access Control" if SECURITY_SMACK=y
