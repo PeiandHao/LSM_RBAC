@@ -1,0 +1,45 @@
+// demo_lsm.c
+#include <linux/lsm_hooks.h>
+#include <linux/sysctl.h>
+#include <linux/sched.h>
+#include <linux/module.h>
+
+static unsigned long long count = 0;
+ 
+int demo_task_alloc(struct task_struct *task,unsigned long clone_flags) // 2. implement relevant function 
+{
+    printk("[+demo] call task_create(). count=%llu\n", ++count);    
+    return 0;
+}
+int demo_inode_create (struct inode *dir, struct dentry *dentry, umode_t mode)
+{
+	printk ("[+demo] call [inode_create] by pid: %d\n", get_current()->pid) ;
+	return 0 ;
+}
+int demo_file_permission(struct file *file, int mask){
+	int max_use = 10;
+	if(file->f_inode->__i_nlink > max_use){
+		printk("[+demo] permisson deny!\n");
+		return 1;
+	}
+	return 0;
+}
+
+static struct security_hook_list demo_hooks[] __lsm_ro_after_init = {
+    LSM_HOOK_INIT(task_alloc,demo_task_alloc),
+    LSM_HOOK_INIT(inode_create,demo_inode_create), //3. add to security_hook_list
+    LSM_HOOK_INIT(file_permission,demo_file_permission),
+ 
+};
+void __init demo_add_hooks(void)
+{
+    pr_info("Demo: becoming mindful.\n");        //print relevant mesg, cat by dmesg | grep demo  
+    security_add_hooks(demo_hooks, ARRAY_SIZE(demo_hooks),"pwh");   //add security model function
+}
+ 
+static int __init demo_init(void){
+    demo_add_hooks();
+    return 0;
+}
+ 
+__initcall(demo_init); //4. register this hook function///

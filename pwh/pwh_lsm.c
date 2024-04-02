@@ -32,13 +32,12 @@
 
 char role_list[3][10] = {"MKDIR\0", "RENAME\0", "RMDIR\0"};
 
-int get_user_config(void);
 
 int read_line(struct file *f, char *buf, int *f_pos){
     int read_bytes = 0;
     char byte;
     while(1){
-        if(vfs_read(f, &byte, 1, &f->f_pos) <= 0){
+        if(kernel_read(f, &byte, 1, (loff_t *)f_pos) <= 0){
             break;
         }
         if(!strcmp(&byte, "\n")){
@@ -62,19 +61,21 @@ int get_user_config(void){
     int user_cap = 0;
     char *token;
     int i, flag = 0;
+    loff_t pos = 0;
 
     printk(KERN_WARNING "[Get the current user]");
     struct user_struct *user = get_current_user();
     int cur_uid = user->uid.val;
     printk("[Current uid is %d\n]", cur_uid);
 
-    char buf[0x400], cur_role[0x30] = {0};
+    char buf[0x50], cur_role[0x50] = {'\0'};
 
     /* Get user config and the  */
     struct file *f = filp_open(RBAC_USER_CONFIG, O_RDONLY, 0);
-    if(IS_ERR(f) || (f == NULL)){
+    if(IS_ERR(f)){
         printk(KERN_WARNING "get user config error. \n");
-        goto GET_CONFIG_ERR;
+        filp_close(f, NULL);
+        return 0;
     }
     /* u16 oldfs; */
     /* /1* 獲取當前地址空間類型 *1/ */
@@ -82,26 +83,28 @@ int get_user_config(void){
     /* set_fs(KERNEL_DS); */
     token = buf;
     i = 0;
-    while(vfs_read(f, buf+i, 1, &f->f_pos) == 1){
+    while(kernel_read(f, buf+i, 1, &pos)==1){
         if(buf[i] == ':'){
             buf[i] = '\0';
             if(str2int(token) == cur_uid){
                 flag = 1;
                 token = buf+i+1;
+                printk("i am in\n");
             }
-        }else if(buf[i] == ';'){
+        }else if(buf[i] == '\n'){
             if(flag){
-                buf[i-1] = '\0'; 
+                buf[i - 1] = '\0'; 
                 printk("cur_role: %s\n", token);
                 strcpy(cur_role, token);
+                break;
             }
+            token = buf+i+1;
         }
         i++;
     }
-
     /* failed for finding the user */
     filp_close(f, 0);
-    if(flag == 0) return 0;
+    if(flag == 0) return 7;
     
     /* Get the capability by token */
     token = buf;
@@ -111,7 +114,8 @@ int get_user_config(void){
         goto GET_CONFIG_ERR; 
     }
     flag= 0;
-    while(vfs_read(f, buf+i, 1, &f->f_pos) == 1){
+    pos = 0;
+    while(kernel_read(f, buf+i, 1, &pos) == 1){
         if(buf[i] == ':'){
             buf[i] = '\0';
             if(!strcmp(token, cur_role)){
@@ -151,33 +155,35 @@ GET_CONFIG_ERR:
 int lsm_enabled(void){
     char buffer[0x50] = {0};
     int count = 0;
+    loff_t pos = 0;
+
     struct file *f = filp_open(RBAC_GATE_CONFIG, O_RDONLY, 0);
     if(IS_ERR(f) || (f == NULL)){
         printk(KERN_WARNING "get gate config error. \n");
-        goto ERROR_FILE;
+        filp_close(f, 0);
+        return 0;
     }
-    count = vfs_read(f, buffer, sizeof(buffer), &f->f_pos);
+    count = kernel_read(f, buffer, 1, &pos);
     if(count < 0){
         printk(KERN_WARNING "read failed...");
-        goto ERROR_FILE;
+        filp_close(f, 0);
+        return 0;
     }
 
     filp_close(f, 0);
-    return !strcmp(buffer,LSM_GATE_OPEN);        
-
-ERROR_FILE:
-    filp_close(f, 0);
+    if(!strcmp(buffer,LSM_GATE_OPEN)) 
+        return 1; 
     return 0;
 }
 
 int check_rename_auth(int cur_role){
-    if(cur_role && RENAME){  
+    if(cur_role & RENAME){  
         return 1;
     }else
         return 0;
 }
 
-int rename_hook(struct inode *old_dir, struct dentry *old_dentry, struct inode *new_dir, struct dentry *new_dentry){
+int pwh_inode_rename(struct inode *old_dir, struct dentry *old_dentry, struct inode *new_dir, struct dentry *new_dentry){
     int gate = lsm_enabled();
     int cur_cap;
     int flag;
@@ -194,12 +200,12 @@ int rename_hook(struct inode *old_dir, struct dentry *old_dentry, struct inode *
     }
 }
 int check_rmdir_auth(int cur_role){
-    if(cur_role && RMDIR){  
+    if(cur_role & RMDIR){  
         return 1;
     }else
         return 0;
 }
-int rmdir_hook(struct inode *dir, struct dentry *dentry){
+int pwh_inode_rmdir(struct inode *dir, struct dentry *dentry){
     int gate = lsm_enabled();
     int cur_cap;
     int flag;
@@ -208,30 +214,32 @@ int rmdir_hook(struct inode *dir, struct dentry *dentry){
     }
     printk("[Hook rmdir successfully!]");
     cur_cap = get_user_config();
+    printk("the cur_cap is %d\n", cur_cap);
     flag = check_rmdir_auth(cur_cap);
     if(flag){
+        printk("You can pass\n");
         return PASS;
     }else{
+        printk("You can not pass\n");
         return NOPASS;
     }
 }
 
 int check_mkdir_auth(int cur_role){
-    if(cur_role && MKDIR){  
+    if(cur_role & MKDIR){  
         return 1;
     }else
         return 0;
 }
-int mkdir_hook(struct inode *dir, struct dentry *dentry, umode_t mode){
-    int gate = lsm_enabled();
+int pwh_mkdir_hook(struct inode *dir, struct dentry *dentry, umode_t mode){
+    /* int gate = lsm_enabled(); */
     int cur_cap;
     int flag;
-    if(!gate){
-        return 0;
-    }
     printk("[Hook mkdir successfully!]");
     cur_cap = get_user_config();
+    printk("the cur_cap is %d\n", cur_cap);
     flag = check_mkdir_auth(cur_cap);
+    flag = 1;
     if(flag){
         printk(KERN_INFO "[+]mkdir accessble");
         return PASS;
@@ -239,6 +247,7 @@ int mkdir_hook(struct inode *dir, struct dentry *dentry, umode_t mode){
         printk(KERN_WARNING "[x]You have no permission");
         return NOPASS;
     }
+    
 }
 
 /*
@@ -247,24 +256,29 @@ int mkdir_hook(struct inode *dir, struct dentry *dentry, umode_t mode){
  *             For use with generic list macros for common operations
  * 
  * */
-struct security_hook_list hooks[] = {
+static struct security_hook_list pwh_hooks[] __lsm_ro_after_init = {
     /* Desc:Initializeing a security_hook_list structure takes 
      * up a lot of space in a source file. This macro takes 
      * care of the common case and reduces the amount of 
      * text incolved
      * */
-    LSM_HOOK_INIT(inode_mkdir, mkdir_hook),
-    LSM_HOOK_INIT(inode_rmdir, rmdir_hook),
-    LSM_HOOK_INIT(inode_rename, rename_hook)
+    //LSM_HOOK_INIT(inode_mkdir, pwh_mkdir_hook),
+    LSM_HOOK_INIT(inode_rmdir, pwh_inode_rmdir),
+    LSM_HOOK_INIT(inode_rename, pwh_inode_rename), 
 };
 
-static int __init pwh_init(void){
+void __init pwh_add_hooks(void){
     printk(KERN_WARNING "[LSM_INIT]\n");
-    security_add_hooks(hooks,ARRAY_SIZE(hooks), "pwh_lsm");
+    security_add_hooks(pwh_hooks,ARRAY_SIZE(pwh_hooks), "pwh");
+
+}
+
+static int __init pwh_init(void){
+    pwh_add_hooks();
     return 0;
 }
 
-security_install(pwh_init);
+__initcall(pwh_init);
 /* static void lsm_exit(void){ */
 /*     printk(KERN_WARNING "[LSM_EXIT]\n"); */
 /*     int i, count=ARRAY_SIZE(hooks); */
