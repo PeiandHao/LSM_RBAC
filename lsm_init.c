@@ -19,10 +19,10 @@
 void menu(){
     printf("\033[31;1m[1] OPEN THE LSM BASED RBAC\033[0m\n");
     printf("\033[32;2m[2] CLOSE THE LSM BASED RBAC\033[0m\n");
-    printf("\033[33;3m[3] MODIFY THE USER FOR CHECKING\033[0m\n");
-    printf("\033[34;4m[4] DELETE THE USER FROM USER_CONFIG\033[0m\n");
-    printf("\033[35;5m[5] MODIFY THE ROLE FOR CHECKING\033[0m\n");
-    printf("\033[36;6m[6] DELETE THE ROLE FROM ROLE_CONFIG\033[0m\n");
+    printf("\033[33;3m[3] SHOW THE HOLE ROLE SET\033[0m\n");
+    printf("\033[34;4m[4] BIND THE USER WITH ROLE\033[0m\n");
+    printf("\033[35;5m[5] SET THE USER-ROLE MAPPING\033[0m\n");
+    printf("\033[36;6m[6] ADD THE ROLE TYPE\033[0m\n");
     printf("Please Input your choice >");
 }
 
@@ -90,7 +90,7 @@ int bind_role(void){
         printf("[x]you have no permission!");
         return 0;
     }
-    printf("give me the uid\n");
+    printf("give me the uid:\n");
     scanf("%d", &m_uid);
     if(m_uid <= 0){
         printf("[x]Wrong uid!\n");
@@ -121,21 +121,23 @@ int bind_role(void){
     /* 获取全局的role */
     struct rbac_role * role_ptr = get_role();
     show_role();
-    printf("[+]Choose your role for binding");
-    char choice[0x10] = {0};
-    scanf("%s", choice);
-    i = 0;
-    flag = 0;
-    while(role_ptr[i++].name){
-        if(!strcmp(role_ptr[i++].name, choice)){
-            flag = 1;
-            write(fd, choice, sizeof(choice));
-            write(fd, ";\n", 1);
-            break;
-        }
-    }
+    printf("[+]Choose your role for binding:");
+    int choice; 
+    scanf("%d", &choice);
+    if(write(fd, role_ptr[choice].name, sizeof(role_ptr[choice].name))) 
+        printf("[+]Write successfully..");
+    close(fd);
+    return 0;
 }
 
+void user_role_map(){
+    show_role();
+    printf("[*]Nice Try,You can add the map by <uid:role_type>");
+}
+
+void add_role_type(){
+    printf("[*]Nice Try,You can add the new type by <role_name:MKDIR/RMDIR/RENAME with ',' for split>");
+}
 
 int main()
 {
@@ -148,28 +150,51 @@ int main()
             case 1:{
                        if((fd = open(GATECONFIG, O_RDWR)) > 0){
                            lseek(fd, 0, SEEK_SET);
-                           write(fd, LSM_ENABLED, 1);
+                           if(write(fd, LSM_ENABLED, 1) < 0){
+                               close(fd);
+                               perror("write faild");
+                               exit(1);
+                           } 
                            close(fd);
                        }else{
                            printf("[x]You have no permission!\n");
                            return 0;
                        }
+                       break;
                     }
             case 2:{
                        if((fd = open(GATECONFIG, O_RDWR)) > 0){
                            lseek(fd, 0, SEEK_SET);
-                           write(fd, LSM_DISABLED, 1);
+                           if(write(fd, LSM_DISABLED, 1) < 0){
+                               close(fd);
+                               perror("write faild");
+                               exit(1);
+                           }
                            close(fd);
                        }else{
                            printf("[x]You have no permission!\n");
                            return 0;
                        }
+                       break;
                    }
             case 3:{
-                       bind_role();
+                       show_role();
+                       break;
                    }
+            case 4:{
+                       bind_role();
+                       break;
+                   }
+            case 5:{
+                       user_role_map();
+                       break;
+                   }
+            case 6:{
+                       add_role_type();
+                       break;
+                   }
+
         }
-        break;
     } 
     return 0;
 }
