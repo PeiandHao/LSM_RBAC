@@ -24,10 +24,7 @@ role_horse:RMDIR;
 最后还有一个文件用来控制LSM模块的启动/关闭,`/etc/rbac/gate_config`,该文件内容若为`T`则表示开启,`F`表示关闭
 
 ### 2.LSM模块
-这里本来最开始是打算动态加载LKM,但是实现过程中查找网上资料发现位于内核源码中的`security_add_hooks`这个函数
-需要修改内核源码`security/security.c`,在源码当中填入`EXPORT_SYMBOL(security_add_hooks);`
-但是我查看当前内核的`/proc/kallsyms`文件时发现该文件已经经过导出,但是在加载我整个模块的时候调用`security_add_hooks`
-函数时直接失败了,因此我将程序重写,通过添加到内核源码的方式进行编写
+这里本来最开始是打算动态加载LKM,但是实现过程中查找网上资料发现位于内核源码中的`security_add_hooks`这个函数需要修改内核源码`security/security.c`,在源码当中填入`EXPORT_SYMBOL(security_add_hooks);`但是我查看当前内核的`/proc/kallsyms`文件时发现该文件已经经过导出,但是在加载我整个模块的时候调用`security_add_hooks`函数时直接失败了,因此我将程序重写,通过添加到内核源码的方式进行编写
 
 这里主要是添加了三种钩子`mkdir,rmdir,rename`
 
@@ -50,4 +47,63 @@ struct security_hook_list hooks[] = {
 };
 ```
 
+每个钩子函数会检查上面讲到的`user_config/role_config`来查看对应用户是否具有该权限
+
+```c
+int mkdir_hook(struct inode *dir, struct dentry *dentry, umode_t mode){
+    int gate = lsm_enabled();
+    int cur_cap;
+    int flag;
+    if(!gate){
+        return 0;
+    }
+    printk("[Hook mkdir successfully!]");
+    cur_cap = get_user_config();
+    flag = check_mkdir_auth(cur_cap);
+    if(flag){
+        printk(KERN_INFO "[+]mkdir accessble");
+        return PASS;
+    }else{
+        printk(KERN_WARNING "[x]You have no permission");
+        return NOPASS;
+    }
+}
+
+int rmdir_hook(struct inode *dir, struct dentry *dentry){
+    int gate = lsm_enabled();
+    int cur_cap;
+    int flag;
+    if(!gate){
+        return 0;
+    }
+    printk("[Hook rmdir successfully!]");
+    cur_cap = get_user_config();
+    flag = check_rmdir_auth(cur_cap);
+    if(flag){
+        return PASS;
+    }else{
+        return NOPASS;
+    }
+}
+int rename_hook(struct inode *old_dir, struct dentry *old_dentry, struct inode *new_dir, struct dentry *new_dentry){
+    int gate = lsm_enabled();
+    int cur_cap;
+    int flag;
+    if(!gate){
+        return 0;
+    }
+    printk("[Hook rename successfully!]");
+    cur_cap = get_user_config();
+    flag = check_rename_auth(cur_cap);
+    if(flag){
+        return PASS;
+    }else{
+        return NOPASS;
+    }
+}
+```
+
+### 3.USER APP
+
+这里简单实现了一个命令行的终端APP,大致的功能局限于修改配置文件
 
